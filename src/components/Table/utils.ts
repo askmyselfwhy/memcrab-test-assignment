@@ -7,7 +7,7 @@ export function getRowIndexFromCellId(cellId: number, columns: number): number {
 
 export function getColumnIndexFromCellId(
   cellId: number,
-  columns: number
+  columns: number,
 ): number {
   return cellId % columns;
 }
@@ -26,7 +26,7 @@ export function generateRow(columns: number, startId: number): Cell[] {
 export function getClosestXCells(
   values: Cell[],
   target: Cell,
-  count: number
+  count: number,
 ): Cell[] {
   if (count <= 0) return [];
 

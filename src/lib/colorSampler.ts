@@ -21,7 +21,7 @@ function createGradientSampler(vars: string): (t: number) => string {
   return (t: number) => {
     const x = Math.max(
       0,
-      Math.min(canvas.width - 1, Math.round(t * (canvas.width - 1)))
+      Math.min(canvas.width - 1, Math.round(t * (canvas.width - 1))),
     );
     const [r, g, b] = ctx.getImageData(x, 0, 1, 1).data;
     return `rgb(${r}, ${g}, ${b})`;

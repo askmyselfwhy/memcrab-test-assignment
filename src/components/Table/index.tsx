@@ -2,19 +2,15 @@ import { useEffect, useReducer } from "react";
 import TableComponent from "./components/Table";
 import Form from "./components/Form";
 import { TableContext } from "./context";
-import { reducer } from "./state";
+import { reducer } from "./state/reducer";
 import { MAX_COLUMNS, MAX_ROWS } from "./config";
 import useDebounceCallback from "@/hooks/useDebounceCallback";
+import initialState from "./state/initial";
 
 import "./style.css";
 
 const Table = () => {
-  const [tableState, dispatch] = useReducer(reducer, {
-    data: [],
-    rows: 10,
-    columns: 10,
-    closest: 5,
-  });
+  const [tableState, dispatch] = useReducer(reducer, initialState);
 
   const delayedTableDataGeneration = useDebounceCallback(() => {
     dispatch({ type: "GENERATE" });
@@ -68,6 +64,7 @@ const Table = () => {
         rows: tableState.rows,
         columns: tableState.columns,
         closest: tableState.closest,
+        stats: tableState.stats,
         onGenerate: onGenerate,
         onHandleClick: handleClick,
         onHandleAdd: handleAdd,

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 
 function useThrottleCallback<T extends (...args: any[]) => void>(
   callback: T,
-  delay: number
+  delay: number,
 ) {
   const lastCallRef = useRef(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -28,7 +28,7 @@ function useThrottleCallback<T extends (...args: any[]) => void>(
         }, remaining);
       }
     },
-    [delay]
+    [delay],
   );
 
   useEffect(() => {

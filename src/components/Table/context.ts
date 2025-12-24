@@ -1,5 +1,5 @@
 import React from "react";
-import type { TableState } from "./state";
+import type { TableState } from "./state/types";
 
 export const TableContext = React.createContext<
   TableState & {
@@ -21,6 +21,11 @@ export const TableContext = React.createContext<
   columns: 0,
   closest: 0,
   data: [],
+  stats: {
+    sum: [],
+    max: [],
+    percentiles: [],
+  },
   onGenerate: () => {},
   onHandleClick: () => {},
   onHandleAdd: () => {},

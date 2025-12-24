@@ -7,7 +7,6 @@ import {
 } from "../../utils";
 import useThrottleCallback from "@/hooks/useThrottleCallback";
 import { createColorSampler } from "@/lib/colorSampler";
-import { getPercentile } from "@/lib/algorithms";
 import { MAX_ROWS } from "../../config";
 
 const DataAttributes = {
@@ -26,51 +25,21 @@ type TableCellModifier = (target: HTMLElement) => {
 type InteractionMode = "highlight" | "heatmap" | "none";
 
 const Table = () => {
-  const { data, onHandleClick, onHandleDelete, closest, rows, onHandleAdd } =
-    useContext(TableContext);
+  const {
+    data,
+    onHandleClick,
+    onHandleDelete,
+    closest,
+    rows,
+    onHandleAdd,
+    stats,
+  } = useContext(TableContext);
+
+  const { sum, max, percentiles } = stats;
 
   const columns = data[0]?.length || 0;
 
   const flattenedData = useMemo(() => data.flat(), [data]);
-  const columnPercentiles = useMemo(() => {
-    if (!data.length) return [];
-
-    return data[0].map((_, colIndex) => {
-      const columnValues = data.map((row) => row[colIndex].value);
-      return getPercentile(columnValues, 60);
-    });
-  }, [data]);
-  const { max, sum } = useMemo(() => {
-    return data.reduce(
-      (acc, row) => {
-        const { max, sum } = row.reduce(
-          (acc, cell) => {
-            return {
-              max: Math.max(acc.max, cell.value),
-              sum: acc.sum + cell.value,
-            };
-          },
-          { max: -Infinity, sum: 0 }
-        );
-        acc.max.push(max);
-        acc.sum.push(sum);
-        return acc;
-      },
-      { max: [] as number[], sum: [] as number[] }
-    );
-  }, [data]);
-  const heatmapRatios = useMemo(() => {
-    return data.map((row, rowIndex) => {
-      const maxValue = max[rowIndex];
-      const sumValue = sum[rowIndex];
-
-      return row.map((cell) => ({
-        id: cell.id,
-        ratio: cell.value / maxValue,
-        percent: ((cell.value / sumValue) * 100).toFixed(0),
-      }));
-    });
-  }, [data, max, sum]);
 
   const cellMapRef = useRef<Map<number, HTMLTableCellElement>>(new Map());
   const tableRef = useRef<HTMLTableElement>(null);
@@ -115,7 +84,7 @@ const Table = () => {
         },
       };
     },
-    [closest, data, flattenedData]
+    [closest, data, flattenedData],
   );
 
   const colorizeRowHeatmap: TableCellModifier = useCallback(
@@ -123,11 +92,12 @@ const Table = () => {
       const rowIndex = Number(target.getAttribute(DataAttributes.ROW_SUM));
       const rowData = data[rowIndex];
       const newColorizedCells: HTMLElement[] = [];
-      rowData.forEach((cell, i) => {
+      rowData.forEach((cell) => {
         const cellElement = cellMapRef.current.get(cell.id);
         if (cellElement) {
-          const cellData = heatmapRatios[rowIndex][i];
-          cellElement.style.backgroundColor = getHeatmapColor(cellData.ratio);
+          const maxValue = max[rowIndex];
+          const ratio = cell.value / maxValue;
+          cellElement.style.backgroundColor = getHeatmapColor(ratio);
           cellElement.classList.add("heatmap-cell");
           newColorizedCells.push(cellElement);
         }
@@ -140,13 +110,13 @@ const Table = () => {
         },
       };
     },
-    [data, heatmapRatios]
+    [data, max],
   );
 
   const applyInteraction = (
     mode: InteractionMode,
     fn: TableCellModifier,
-    target: HTMLElement
+    target: HTMLElement,
   ) => {
     interactionRef.current.mode = mode;
 
@@ -163,7 +133,7 @@ const Table = () => {
   };
 
   const onMouseMove = (
-    event: React.MouseEvent<HTMLTableElement, MouseEvent>
+    event: React.MouseEvent<HTMLTableElement, MouseEvent>,
   ) => {
     const target = event.target as HTMLElement;
     if (target === prevTargetElementRef.current) return;
@@ -203,7 +173,7 @@ const Table = () => {
       applyInteraction(
         "highlight",
         highlightClosestCells,
-        prevTargetElementRef.current
+        prevTargetElementRef.current,
       );
     }
   }, [data, highlightClosestCells]);
@@ -235,7 +205,7 @@ const Table = () => {
         <tbody>
           {data.map((row, rowIndex) => (
             <tr key={rowIndex} {...{ [DataAttributes.ROW_INDEX]: rowIndex }}>
-              {row.map((cell, colIndex) => (
+              {row.map((cell) => (
                 <td
                   key={cell.id}
                   {...{ [DataAttributes.CELL]: cell.id }}
@@ -248,7 +218,7 @@ const Table = () => {
                     {cell.value}
                   </span>
                   <span className="percent">
-                    {heatmapRatios[rowIndex][colIndex].percent}%
+                    {((cell.value / sum[rowIndex]) * 100).toFixed(0)}%
                   </span>
                 </td>
               ))}
@@ -270,7 +240,7 @@ const Table = () => {
           <tr>
             {isDataExist &&
               data[0].map((_, colIndex) => {
-                return <td key={colIndex}>{columnPercentiles[colIndex]}</td>;
+                return <td key={colIndex}>{percentiles[colIndex]}</td>;
               })}
             {isDataExist && <td colSpan={2}></td>}
           </tr>
