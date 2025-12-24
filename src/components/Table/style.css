@@ -1,0 +1,49 @@
+:root {
+  --heatmap-colors: #df60ff, #759cff, #72fff8, #fff27c;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+td,
+th {
+  border: 1px solid #ccc;
+  padding: 4px;
+  min-width: 80px;
+  background-color: white;
+}
+.table-cell {
+  transition: all 0.35s ease;
+}
+.table-cell,
+.controls {
+  cursor: pointer;
+}
+.table-cell:hover {
+  background-color: #e0e0e0;
+}
+thead th,
+tfoot td,
+.controls {
+  background-color: #f0f0f0;
+}
+.table-cell.highlighted {
+  background-color: #5ef09d;
+}
+.controls:hover {
+  background-color: #ff9999;
+}
+
+.table-cell .value {
+  display: inline;
+}
+.table-cell .percent {
+  display: none;
+}
+
+.table-cell.heatmap-cell .value {
+  display: none;
+}
+.table-cell.heatmap-cell .percent {
+  display: inline;
+}
