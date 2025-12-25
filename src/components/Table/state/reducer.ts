@@ -1,9 +1,5 @@
-import { applyTableMutation } from "./actions";
-import { applyStatsMutation } from "./actions.stats";
+import { createReducer } from "@/lib/reducer";
 import type { TableState, TableAction } from "./types";
+import Mutations from "./mutations";
 
-export function reducer(state: TableState, action: TableAction): TableState {
-  const newState = applyTableMutation(state, action);
-  newState.stats = applyStatsMutation(state, newState, action);
-  return newState;
-}
+export const reducer = createReducer<TableState, TableAction>(Mutations);

@@ -1,13 +1,7 @@
-import { getColumnIndexFromCellId, getRowIndexFromCellId } from "../utils";
-import type { ActionOf, TableAction, TableState } from "./types";
-import type { Cell } from "../types";
+import type { ActionOf, TableAction, TableState } from "../types";
+import type { Cell } from "../../types";
 import { getPercentile } from "@/lib/algorithms";
-
-type StatsMutation = (
-  oldState: TableState,
-  newState: TableState,
-  action: TableAction,
-) => TableState["stats"];
+import { merge } from "@/lib/utils";
 
 function getColumnPercentile(data: Cell[][], colIndex: number): number {
   const columnValues = data.map((row) => row[colIndex].value);
@@ -58,7 +52,7 @@ function getRowsStats(data: Cell[][]): { max: number[]; sum: number[] } {
   return { max, sum };
 }
 
-function updateAllStats(data: Cell[][]): {
+function revalidateStats(data: Cell[][]): {
   sum: number[];
   max: number[];
   percentiles: number[];
@@ -72,77 +66,81 @@ function updateAllStats(data: Cell[][]): {
   };
 }
 
-export const setSettings: StatsMutation = (
+const setSettings = (
   _oldState: TableState,
-  _newState: TableState,
+  newState: TableState,
+  _action: ActionOf<"SET_SETTINGS">,
 ) => {
-  return {
-    sum: [],
-    max: [],
-    percentiles: [],
-  };
+  return newState;
 };
 
-export const generateTable = (
+const generateTable = (
   _oldState: TableState,
   newState: TableState,
   _action: ActionOf<"GENERATE">,
 ) => {
-  return updateAllStats(newState.data);
+  return merge(newState, {
+    stats: revalidateStats(newState.data),
+  });
 };
 
-export const addRow: StatsMutation = (
+const addRow = (
   oldState: TableState,
   newState: TableState,
+  _action: ActionOf<"ADD_ROW">,
 ) => {
   const { max, sum } = getRowsStats([newState.data[newState.data.length - 1]]);
   const columnStats = getColumnsStats(newState.data);
-  return {
-    sum: [...oldState.stats.sum, sum[0]],
-    max: [...oldState.stats.max, max[0]],
-    percentiles: columnStats.percentiles,
-  };
+  return merge(newState, {
+    stats: {
+      sum: [...oldState.stats.sum, sum[0]],
+      max: [...oldState.stats.max, max[0]],
+      percentiles: columnStats.percentiles,
+    },
+  });
 };
-export const deleteRow = (
+
+const deleteRow = (
   oldState: TableState,
   newState: TableState,
   action: ActionOf<"DELETE_ROW">,
 ) => {
   const { rowIndex } = action.payload;
   const columnStats = getColumnsStats(newState.data);
-  return {
-    sum: oldState.stats.sum.filter((_, index) => index !== rowIndex),
-    max: oldState.stats.max.filter((_, index) => index !== rowIndex),
-    percentiles: columnStats.percentiles,
-  };
+  return merge(newState, {
+    stats: {
+      sum: oldState.stats.sum.filter((_, index) => index !== rowIndex),
+      max: oldState.stats.max.filter((_, index) => index !== rowIndex),
+      percentiles: columnStats.percentiles,
+    },
+  });
 };
 
-export const updateCell = (
+const updateCell = (
   oldState: TableState,
   newState: TableState,
   action: ActionOf<"UPDATE_CELL">,
 ) => {
-  const { columns, data } = oldState;
-  const { data: newData } = newState;
-  const { cellId } = action.payload;
+  const { data } = oldState;
+  const { rowIndex, columnIndex, newValue } = action.payload;
 
-  const rowIndex = getRowIndexFromCellId(cellId, columns);
-  const colIndex = getColumnIndexFromCellId(cellId, columns);
+  const oldValue = data[rowIndex][columnIndex].value;
 
-  const oldValue = data[rowIndex][colIndex].value;
-  const newValue = newData[rowIndex][colIndex].value;
-
-  return {
-    sum: oldState.stats.sum.map((rowSum, rIndex) =>
-      rowIndex === rIndex ? rowSum + (newValue - oldValue) : rowSum,
-    ),
-    max: oldState.stats.max.map((rowMax, rIndex) =>
-      rowIndex === rIndex ? Math.max(rowMax, newValue) : rowMax,
-    ),
-    percentiles: oldState.stats.percentiles.map((colPercentile, cIndex) =>
-      colIndex === cIndex ? getColumnPercentile(data, colIndex) : colPercentile,
-    ),
-  };
+  return merge(newState, {
+    stats: {
+      sum: oldState.stats.sum.map((rowSum, rIndex) =>
+        rowIndex === rIndex ? rowSum + (newValue - oldValue) : rowSum,
+      ),
+      max: oldState.stats.max.map((rowMax, rIndex) =>
+        rowIndex === rIndex ? Math.max(rowMax, newValue) : rowMax,
+      ),
+      percentiles: oldState.stats.percentiles.map((colPercentile, cIndex) =>
+        columnIndex === cIndex
+          ? getColumnPercentile(data, columnIndex)
+          : colPercentile,
+      ),
+    },
+  });
 };
 
 /**
@@ -152,7 +150,7 @@ export function applyStatsMutation(
   oldState: TableState,
   newState: TableState,
   action: TableAction,
-): TableState["stats"] {
+): TableState {
   if (action.type === "GENERATE") {
     return generateTable(oldState, newState, action);
   } else if (action.type === "SET_SETTINGS") {
@@ -164,5 +162,7 @@ export function applyStatsMutation(
   } else if (action.type === "UPDATE_CELL") {
     return updateCell(oldState, newState, action);
   }
-  return updateAllStats(newState.data);
+  return merge(newState, {
+    stats: revalidateStats(newState.data),
+  });
 }

@@ -1,39 +1,34 @@
 import { useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import { TableContext } from "../../context";
-import {
-  getClosestXCells,
-  getRowIndexFromCellId,
-  getColumnIndexFromCellId,
-} from "../../utils";
+import { getClosestXCells } from "../../utils";
 import useThrottleCallback from "@/hooks/useThrottleCallback";
 import { createColorSampler } from "@/lib/colorSampler";
-import { MAX_ROWS } from "../../config";
-
-const DataAttributes = {
-  CELL: "data-cell-index",
-  ROW_SUM: "data-sum",
-  ROW_INDEX: "data-row-index",
-};
+import { DataAttributes, MAX_ROWS } from "../../config";
+import TableDataRow from "../TableDataRow";
 
 const getHeatmapColor = createColorSampler("--heatmap-colors");
 
-type TableCellModifier = (target: HTMLElement) => {
+type TableCellMutation = (
+  rowIndex: number,
+  columnIndex: number,
+  target: HTMLElement,
+) => {
   cells: HTMLElement[];
   cleanCallback: (cell: HTMLElement) => void;
 };
 
 type InteractionMode = "highlight" | "heatmap" | "none";
 
+const getCellRowColumnIndices = (target: HTMLElement) => {
+  const rowIndex =
+    Number(target?.parentElement?.getAttribute(DataAttributes.ROW)) || 0;
+  const columnIndex = Number(target.getAttribute(DataAttributes.CELL)) || -1;
+  return { rowIndex, columnIndex };
+};
+
 const Table = () => {
-  const {
-    data,
-    onHandleClick,
-    onHandleDelete,
-    closest,
-    rows,
-    onHandleAdd,
-    stats,
-  } = useContext(TableContext);
+  const { data, onHandleClick, closest, rows, onHandleAdd, stats } =
+    useContext(TableContext);
 
   const { sum, max, percentiles } = stats;
 
@@ -62,12 +57,9 @@ const Table = () => {
     }
   };
 
-  const highlightClosestCells: TableCellModifier = useCallback(
-    (target) => {
-      const id = Number(target.getAttribute(DataAttributes.CELL));
-      const rowIndex = getRowIndexFromCellId(id, data[0].length);
-      const colIndex = getColumnIndexFromCellId(id, data[0].length);
-      const cellData = data[rowIndex][colIndex];
+  const highlightClosestCells: TableCellMutation = useCallback(
+    (rowIndex, columnIndex, _target) => {
+      const cellData = data[rowIndex][columnIndex];
       const closestCells = getClosestXCells(flattenedData, cellData, closest);
       const newHighlightedCells: HTMLElement[] = [];
       closestCells.forEach((cell) => {
@@ -87,9 +79,8 @@ const Table = () => {
     [closest, data, flattenedData],
   );
 
-  const colorizeRowHeatmap: TableCellModifier = useCallback(
-    (target) => {
-      const rowIndex = Number(target.getAttribute(DataAttributes.ROW_SUM));
+  const colorizeRowHeatmap: TableCellMutation = useCallback(
+    (rowIndex, _columnIndex, _target) => {
       const rowData = data[rowIndex];
       const newColorizedCells: HTMLElement[] = [];
       rowData.forEach((cell) => {
@@ -115,7 +106,7 @@ const Table = () => {
 
   const applyInteraction = (
     mode: InteractionMode,
-    fn: TableCellModifier,
+    fn: TableCellMutation,
     target: HTMLElement,
   ) => {
     interactionRef.current.mode = mode;
@@ -123,7 +114,9 @@ const Table = () => {
     const wrapper = () => {
       if (!target || !tableRef.current)
         return { cells: [], cleanCallback: () => {} };
-      return fn(target);
+      const { rowIndex, columnIndex: colIndex } =
+        getCellRowColumnIndices(target);
+      return fn(rowIndex, colIndex, target);
     };
 
     const { cells, cleanCallback } = wrapper();
@@ -139,10 +132,10 @@ const Table = () => {
     if (target === prevTargetElementRef.current) return;
     prevTargetElementRef.current = target;
     resetCellStyles();
-    if (target.hasAttribute(DataAttributes.ROW_SUM)) {
-      applyInteraction("heatmap", colorizeRowHeatmap, target);
-    } else if (target.hasAttribute(DataAttributes.CELL)) {
+    if (target.hasAttribute(DataAttributes.CELL)) {
       applyInteraction("highlight", highlightClosestCells, target);
+    } else if (target.hasAttribute(DataAttributes.ROW_SUM_CELL)) {
+      applyInteraction("heatmap", colorizeRowHeatmap, target);
     }
   };
 
@@ -155,11 +148,10 @@ const Table = () => {
     if (tableRef.current) {
       const target = event.target as HTMLElement;
       if (target.hasAttribute(DataAttributes.CELL)) {
-        const cellId = Number(target.getAttribute(DataAttributes.CELL));
-        const rowIndex = getRowIndexFromCellId(cellId, data[0].length);
-        const colIndex = getColumnIndexFromCellId(cellId, data[0].length);
+        const { rowIndex, columnIndex: colIndex } =
+          getCellRowColumnIndices(target);
         const cellData = data[rowIndex][colIndex];
-        onHandleClick(cellId, cellData.value + 1);
+        onHandleClick(rowIndex, colIndex, cellData.value + 1);
       }
     }
   };
@@ -203,37 +195,14 @@ const Table = () => {
           </tr>
         </thead>
         <tbody>
-          {data.map((row, rowIndex) => (
-            <tr key={rowIndex} {...{ [DataAttributes.ROW_INDEX]: rowIndex }}>
-              {row.map((cell) => (
-                <td
-                  key={cell.id}
-                  {...{ [DataAttributes.CELL]: cell.id }}
-                  ref={(el) => {
-                    if (el) cellMapRef.current.set(cell.id, el);
-                  }}
-                  className="table-cell"
-                >
-                  <span className="value" style={{ pointerEvents: "none" }}>
-                    {cell.value}
-                  </span>
-                  <span className="percent">
-                    {((cell.value / sum[rowIndex]) * 100).toFixed(0)}%
-                  </span>
-                </td>
-              ))}
-              {row.length > 0 && (
-                <td
-                  className="table-cell"
-                  {...{ [DataAttributes.ROW_SUM]: rowIndex }}
-                >
-                  {sum[rowIndex]}
-                </td>
-              )}
-              <td className="controls" onClick={() => onHandleDelete(rowIndex)}>
-                ❌
-              </td>
-            </tr>
+          {data.map((row, index) => (
+            <TableDataRow
+              row={row}
+              key={index}
+              index={index}
+              rowSum={sum[index]}
+              cellMapRef={cellMapRef}
+            />
           ))}
         </tbody>
         <tfoot>

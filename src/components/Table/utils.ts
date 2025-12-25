@@ -1,17 +1,6 @@
 import { MAX_CELL_VALUE } from "./config";
 import type { Cell } from "./types";
 
-export function getRowIndexFromCellId(cellId: number, columns: number): number {
-  return Math.floor(cellId / columns);
-}
-
-export function getColumnIndexFromCellId(
-  cellId: number,
-  columns: number,
-): number {
-  return cellId % columns;
-}
-
 export function generateRow(columns: number, startId: number): Cell[] {
   const row: Cell[] = [];
   for (let j = 0; j < columns; j++) {

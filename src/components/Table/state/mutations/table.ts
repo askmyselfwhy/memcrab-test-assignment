@@ -1,53 +1,41 @@
-import type { ActionOf, TableAction, TableState } from "./types";
-import {
-  generateRow,
-  getColumnIndexFromCellId,
-  getRowIndexFromCellId,
-} from "../utils";
-import { MAX_CELL_VALUE } from "../config";
+import type { ActionOf, TableAction, TableState } from "../types";
+import { generateRow } from "../../utils";
+import { MAX_CELL_VALUE } from "../../config";
+import { merge } from "@/lib/utils";
 
-export const setSettings = (
-  state: TableState,
-  action: ActionOf<"SET_SETTINGS">,
-) => {
+const setSettings = (state: TableState, action: ActionOf<"SET_SETTINGS">) => {
   const { rows, columns, closest } = action.payload;
-  return {
-    ...state,
+  return merge(state, {
     rows,
     columns,
     closest,
-  };
+  });
 };
 
-export const generateTable = (state: TableState) => {
+const generateTable = (state: TableState, _action: ActionOf<"GENERATE">) => {
   const { rows, columns } = state;
   const data = [];
   for (let i = 0; i < rows; i++) {
     const row = generateRow(columns, i * columns);
     data.push(row);
   }
-  return {
-    ...state,
+  return merge(state, {
     data,
-  };
+  });
 };
 
-export const addRow = (state: TableState, _action: ActionOf<"ADD_ROW">) => {
+const addRow = (state: TableState, _action: ActionOf<"ADD_ROW">) => {
   const { data, rows, columns } = state;
   const newValues = data.map((row) => row.map((cell) => ({ ...cell })));
   const newRow = generateRow(columns, rows * columns);
   newValues.push(newRow);
-  return {
-    ...state,
+  return merge(state, {
     data: newValues,
     rows: rows + 1,
-  };
+  });
 };
 
-export const deleteRow = (
-  state: TableState,
-  action: ActionOf<"DELETE_ROW">,
-) => {
+const deleteRow = (state: TableState, action: ActionOf<"DELETE_ROW">) => {
   const { columns, rows, data } = state;
   const { rowIndex } = action.payload;
   const newValues = data
@@ -58,47 +46,41 @@ export const deleteRow = (
       }
       return row;
     });
-  return {
-    ...state,
+  return merge(state, {
     data: newValues,
     rows: rows - 1,
-  };
+  });
 };
 
-export const updateCell = (
-  state: TableState,
-  action: ActionOf<"UPDATE_CELL">,
-) => {
-  const { columns, data } = state;
-  const { cellId, newValue } = action.payload;
-  const rowIndex = getRowIndexFromCellId(cellId, columns);
-  const colIndex = getColumnIndexFromCellId(cellId, columns);
+const updateCell = (state: TableState, action: ActionOf<"UPDATE_CELL">) => {
+  const { data } = state;
+  const { rowIndex, columnIndex, newValue } = action.payload;
 
   const newValues = data.map((row) => row.map((cell) => ({ ...cell })));
-  newValues[rowIndex][colIndex] = {
-    ...newValues[rowIndex][colIndex],
+  newValues[rowIndex][columnIndex] = {
+    ...newValues[rowIndex][columnIndex],
     value: Math.min(newValue, MAX_CELL_VALUE),
   };
-  return {
-    ...state,
+  return merge(state, {
     data: newValues,
-  };
+  });
 };
 
 export function applyTableMutation(
-  state: TableState,
+  _oldState: TableState,
+  newState: TableState,
   action: TableAction,
 ): TableState {
   if (action.type === "GENERATE") {
-    return generateTable(state);
+    return generateTable(newState, action);
   } else if (action.type === "SET_SETTINGS") {
-    return setSettings(state, action);
+    return setSettings(newState, action);
   } else if (action.type === "ADD_ROW") {
-    return addRow(state, action);
+    return addRow(newState, action);
   } else if (action.type === "DELETE_ROW") {
-    return deleteRow(state, action);
+    return deleteRow(newState, action);
   } else if (action.type === "UPDATE_CELL") {
-    return updateCell(state, action);
+    return updateCell(newState, action);
   }
-  return state;
+  return newState;
 }

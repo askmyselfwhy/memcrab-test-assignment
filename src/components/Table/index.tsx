@@ -1,11 +1,11 @@
 import { useEffect, useReducer } from "react";
-import TableComponent from "./components/Table";
 import Form from "./components/Form";
-import { TableContext } from "./context";
+import TableComponent from "./components/Table";
 import { reducer } from "./state/reducer";
-import { MAX_COLUMNS, MAX_ROWS } from "./config";
+import initialState from "./state/initialState";
+import { TableContext } from "./context";
 import useDebounceCallback from "@/hooks/useDebounceCallback";
-import initialState from "./state/initial";
+import { MAX_COLUMNS, MAX_ROWS } from "./config";
 
 import "./style.css";
 
@@ -50,8 +50,15 @@ const Table = () => {
     dispatch({ type: "DELETE_ROW", payload: { rowIndex } });
   };
 
-  const handleClick = (cellId: number, newValue: number) => {
-    dispatch({ type: "UPDATE_CELL", payload: { cellId, newValue } });
+  const handleClick = (
+    rowIndex: number,
+    columnIndex: number,
+    newValue: number,
+  ) => {
+    dispatch({
+      type: "UPDATE_CELL",
+      payload: { rowIndex, columnIndex, newValue },
+    });
   };
 
   useEffect(() => {

@@ -20,7 +20,10 @@ export type TableAction =
     }
   | { type: "ADD_ROW" }
   | { type: "DELETE_ROW"; payload: { rowIndex: number } }
-  | { type: "UPDATE_CELL"; payload: { cellId: number; newValue: number } };
+  | {
+      type: "UPDATE_CELL";
+      payload: { rowIndex: number; columnIndex: number; newValue: number };
+    };
 
 export type ActionOf<T extends TableAction["type"]> = Extract<
   TableAction,
