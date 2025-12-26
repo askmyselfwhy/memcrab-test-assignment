@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef } from "react";
 
-function useThrottleCallback<T extends (...args: unknown[]) => void>(
+function useThrottleCallback<T extends (...args: any[]) => void>(
   callback: T,
   delay: number,
-) {
+): T {
   const lastCallRef = useRef(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const callbackRef = useRef(callback);
@@ -29,7 +29,7 @@ function useThrottleCallback<T extends (...args: unknown[]) => void>(
       }
     },
     [delay],
-  );
+  ) as T;
 
   useEffect(() => {
     return () => {

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef } from "react";
 
-function useDebounceCallback<T extends (...args: unknown[]) => void>(
+function useDebounceCallback<T extends (...args: any[]) => void>(
   callback: T,
   delay: number,
-) {
+): T {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const callbackRef = useRef(callback);
 
@@ -22,7 +22,7 @@ function useDebounceCallback<T extends (...args: unknown[]) => void>(
       }, delay);
     },
     [delay],
-  );
+  ) as T;
 
   useEffect(() => {
     return () => {

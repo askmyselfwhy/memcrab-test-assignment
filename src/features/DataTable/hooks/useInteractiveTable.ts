@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTableContext } from "./useTableContext";
 import { DataAttributes } from "../config";
 import { getClosestXCells } from "../utils";
@@ -38,8 +38,6 @@ export const useInteractiveTable = ({
     useTableContext();
 
   const { max } = stats;
-
-  const columnsCount = useMemo(() => data[0]?.length ?? 0, [data]);
 
   const prevTargetRef = useRef<HTMLElement | null>(null);
 
@@ -87,7 +85,7 @@ export const useInteractiveTable = ({
         cleanup: (cell) => cell.classList.remove("highlighted"),
       };
     },
-    [closest, columnsCount, data, sortedData, cellIndex, cellMapRef],
+    [closest, data, sortedData, cellIndex, cellMapRef],
   );
 
   const colorizeRowHeatmap = useCallback(
