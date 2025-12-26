@@ -1,5 +1,5 @@
 import "./App.css";
-import Table from "./components/Table";
+import Table from "./features/DataTable";
 
 function App() {
   return <Table />;

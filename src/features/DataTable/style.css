@@ -7,13 +7,10 @@ table {
 }
 td,
 th {
-  border: 1px solid #ccc;
-  padding: 4px;
+  padding: 0px;
+  outline: 1px solid #ebebeb;
   min-width: 80px;
   background-color: white;
-}
-.table-cell {
-  transition: all 0.35s ease;
 }
 .table-cell,
 .controls {
@@ -27,7 +24,7 @@ tfoot td,
 .controls {
   background-color: #f0f0f0;
 }
-.table-cell.highlighted {
+.highlighted {
   background-color: #5ef09d;
 }
 .controls:hover {
@@ -41,9 +38,9 @@ tfoot td,
   display: none;
 }
 
-.table-cell.heatmap-cell .value {
+.heatmap-cell .value {
   display: none;
 }
-.table-cell.heatmap-cell .percent {
+.heatmap-cell .percent {
   display: inline;
 }

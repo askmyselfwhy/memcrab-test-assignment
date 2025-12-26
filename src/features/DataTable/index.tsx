@@ -1,5 +1,5 @@
 import { useEffect, useReducer } from "react";
-import Form from "./components/Form";
+import Form from "./components/GenerateTableForm";
 import TableComponent from "./components/Table";
 import { reducer } from "./state/reducer";
 import initialState from "./state/initialState";
@@ -72,6 +72,8 @@ const Table = () => {
         columns: tableState.columns,
         closest: tableState.closest,
         stats: tableState.stats,
+        sortedData: tableState.sortedData,
+        cellIndex: tableState.cellIndex,
         onGenerate: onGenerate,
         onHandleClick: handleClick,
         onHandleAdd: handleAdd,

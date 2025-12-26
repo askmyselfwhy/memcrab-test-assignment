@@ -1,9 +1,8 @@
-import { useContext } from "react";
-import { TableContext } from "../../context";
-import { MAX_COLUMNS, MAX_ROWS } from "../../config";
+import { MAX_COLUMNS, MAX_ROWS } from "../config";
+import { useTableContext } from "../hooks/useTableContext";
 
 const GenerateTableForm = () => {
-  const { onGenerate, rows, columns, closest } = useContext(TableContext);
+  const { onGenerate, rows, columns, closest } = useTableContext();
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value, name } = e.target;

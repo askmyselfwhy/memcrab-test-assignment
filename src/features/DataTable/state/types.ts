@@ -1,7 +1,9 @@
-import type { Cell } from "../types";
+import type { Cell, SortedCell, CellIndex } from "../types";
 
 export type TableState = {
   data: Cell[][];
+  sortedData: SortedCell[];
+  cellIndex: CellIndex;
   rows: number;
   columns: number;
   closest: number;

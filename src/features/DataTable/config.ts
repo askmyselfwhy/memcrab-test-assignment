@@ -4,6 +4,5 @@ export const MAX_COLUMNS = 100;
 
 export const DataAttributes = {
   CELL: "data-cell-index",
-  ROW: "data-row-index",
   ROW_SUM_CELL: "data-row-sum-cell",
-};
+} as const;
