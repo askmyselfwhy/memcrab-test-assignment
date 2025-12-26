@@ -37,7 +37,7 @@ function TableBody({
           position: "relative",
         }}
       >
-        {virtualRows.map((virtualRow, index) => {
+        {virtualRows.map((virtualRow) => {
           const row = rows[virtualRow.index];
 
           return (

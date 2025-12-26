@@ -17,8 +17,8 @@ type CellMutationResult = {
 };
 
 const getCellRowColumnIndices = (target: HTMLElement) => ({
-  rowIndex: Number(target.closest("tr")?.getAttribute("data-index")) ?? -1,
-  columnIndex: Number(target.getAttribute(DataAttributes.CELL)) ?? -1,
+  rowIndex: Number(target.closest("tr")?.getAttribute("data-index") ?? -1),
+  columnIndex: Number(target.getAttribute(DataAttributes.CELL) ?? -1),
 });
 
 const createCellId = (row: number, col: number) => `${row}_${col}`;
@@ -75,7 +75,7 @@ export const useInteractiveTable = ({
       const cells: HTMLElement[] = [];
 
       closestCells.forEach(({ row, col }) => {
-        const el = cellMapRef.current.get(createCellId(row, col));
+        const el = cellMapRef.current?.get(createCellId(row, col));
         if (el) {
           el.classList.add("highlighted");
           cells.push(el);
@@ -87,7 +87,7 @@ export const useInteractiveTable = ({
         cleanup: (cell) => cell.classList.remove("highlighted"),
       };
     },
-    [closest, columnsCount, data, sortedData, cellIndex],
+    [closest, columnsCount, data, sortedData, cellIndex, cellMapRef],
   );
 
   const colorizeRowHeatmap = useCallback(
@@ -105,7 +105,7 @@ export const useInteractiveTable = ({
         .forEach((cell) => {
           const [r, c] = cell.id.split("_").map(Number);
           const value = data[r]?.[c]?.value;
-          const el = cellMapRef.current.get(cell.id);
+          const el = cellMapRef.current?.get(cell.id);
 
           if (!el || value == null) return;
 
@@ -122,7 +122,7 @@ export const useInteractiveTable = ({
         },
       };
     },
-    [data, max, renderRows],
+    [data, max, renderRows, cellMapRef],
   );
 
   const applyInteraction = useCallback(
@@ -130,9 +130,9 @@ export const useInteractiveTable = ({
       resetInteraction();
 
       if (!tableRef.current) return;
+      if (mode === "none") return;
 
       const { rowIndex, columnIndex } = getCellRowColumnIndices(target);
-      if (rowIndex < 0 || columnIndex < 0) return;
 
       const result =
         mode === "highlight"

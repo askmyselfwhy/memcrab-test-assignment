@@ -4,80 +4,6 @@ import { DataAttributes } from "../config";
 import type { Cell, TableCell, TableColumnDef } from "../types";
 import type { Row } from "@tanstack/react-table";
 
-type DataCellRendererProps = {
-  data: Cell;
-  sum: number;
-  cell: TableCell;
-  cellMapRef: React.RefObject<Map<string, HTMLElement>>;
-};
-const DataCellRenderer = ({
-  data,
-  sum,
-  cell,
-  cellMapRef,
-}: DataCellRendererProps) => {
-  const cellValue = data.value;
-  return (
-    <span
-      style={{ display: "inline-block", width: "100%", height: "100%" }}
-      {...{ [DataAttributes.CELL]: Number(cell.column.id) }}
-      ref={(el) => {
-        if (el) cellMapRef.current.set(cell.id, el);
-      }}
-    >
-      <span className="value" style={{ pointerEvents: "none" }}>
-        {cellValue}
-      </span>
-      <span className="percent" style={{ pointerEvents: "none" }}>
-        {((cellValue / sum) * 100).toFixed(0)}%
-      </span>
-    </span>
-  );
-};
-
-type SummaryCellRendererProps = {
-  sum: number;
-};
-const SummaryCellRenderer = ({ sum }: SummaryCellRendererProps) => {
-  return (
-    <span
-      {...{ [DataAttributes.ROW_SUM_CELL]: true }}
-      style={{
-        display: "inline-block",
-        width: "100%",
-        height: "100%",
-        backgroundColor: "#f9f9f9",
-      }}
-    >
-      {sum}
-    </span>
-  );
-};
-
-type ActionsCellRendererProps = {
-  row: Row<Cell[]>;
-  onHandleDelete: (rowIndex: number) => void;
-};
-const ActionsCellRenderer = ({
-  row,
-  onHandleDelete,
-}: ActionsCellRendererProps) => {
-  return (
-    <button
-      style={{
-        display: "inline-block",
-        width: "100%",
-        height: "100%",
-        padding: 0,
-        borderRadius: 0,
-      }}
-      onClick={() => onHandleDelete(row.index)}
-    >
-      ❌
-    </button>
-  );
-};
-
 type UseTableColumnsProps = {
   cellMapRef: React.RefObject<Map<string, HTMLTableCellElement>>;
 };
@@ -89,6 +15,80 @@ export const useTableColumns = ({
   const { percentiles, sum } = stats;
 
   return useMemo(() => {
+    type DataCellRendererProps = {
+      data: Cell;
+      sum: number;
+      cell: TableCell;
+      cellMapRef: React.RefObject<Map<string, HTMLElement>>;
+    };
+    const DataCellRenderer = ({
+      data,
+      sum,
+      cell,
+      cellMapRef,
+    }: DataCellRendererProps) => {
+      const cellValue = data.value;
+      return (
+        <span
+          style={{ display: "inline-block", width: "100%", height: "100%" }}
+          {...{ [DataAttributes.CELL]: Number(cell.column.id) }}
+          ref={(el) => {
+            if (el) cellMapRef.current.set(cell.id, el);
+          }}
+        >
+          <span className="value" style={{ pointerEvents: "none" }}>
+            {cellValue}
+          </span>
+          <span className="percent" style={{ pointerEvents: "none" }}>
+            {((cellValue / sum) * 100).toFixed(0)}%
+          </span>
+        </span>
+      );
+    };
+
+    type SummaryCellRendererProps = {
+      sum: number;
+    };
+    const SummaryCellRenderer = ({ sum }: SummaryCellRendererProps) => {
+      return (
+        <span
+          {...{ [DataAttributes.ROW_SUM_CELL]: true }}
+          style={{
+            display: "inline-block",
+            width: "100%",
+            height: "100%",
+            backgroundColor: "#f9f9f9",
+          }}
+        >
+          {sum}
+        </span>
+      );
+    };
+
+    type ActionsCellRendererProps = {
+      row: Row<Cell[]>;
+      onHandleDelete: (rowIndex: number) => void;
+    };
+    const ActionsCellRenderer = ({
+      row,
+      onHandleDelete,
+    }: ActionsCellRendererProps) => {
+      return (
+        <button
+          style={{
+            display: "inline-block",
+            width: "100%",
+            height: "100%",
+            padding: 0,
+            borderRadius: 0,
+          }}
+          onClick={() => onHandleDelete(row.index)}
+        >
+          ❌
+        </button>
+      );
+    };
+
     if (data.length === 0) return [];
     const columns: TableColumnDef[] = data[0].map((_, colIndex) => ({
       id: `${colIndex}`,
@@ -128,5 +128,5 @@ export const useTableColumns = ({
       size: 80,
     });
     return columns;
-  }, [data, percentiles, sum, onHandleDelete]);
+  }, [data, percentiles, sum, onHandleDelete, cellMapRef]);
 };
